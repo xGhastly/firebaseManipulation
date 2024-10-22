@@ -41,35 +41,56 @@ async function createRandomDocument(schema, collectionName) {
 
     schema.forEach(field => {
         if (collectionName === 'users') {
-            if (field === 'created_time') {
-                document[field] = faker.date.past();
+            if (field === 'Nascimento') {
+                const birthDate = faker.date.birthdate({ min: 18, max: 35, mode: 'age' });
+                document[field] = birthDate.toLocaleDateString('pt-BR')
+            } else if (field === 'Nome') {
+                document[field] = faker.person.firstName();
+            } else if (field === 'Sobrenome') {
+                document[field] = faker.person.lastName();
+            } else if (field === 'created_time') {
+                document[field] = faker.date.past()
             } else if (field === 'display_name') {
-                document[field] = faker.person.fullName();
+                document[field] = faker.person.firstName(); // Preenchido conforme solicitado
             } else if (field === 'email') {
-                document[field] = faker.internet.email();
+                document[field] = faker.internet.email(); // Preenchido conforme solicitado
+            } else if (field === 'genero') {
+                document[field] = "Masculino"; // Preenchido conforme solicitado
+            } else if (field === 'phone') {
+                document[field] = faker.phone.number('(##) #####-####'); // Preenchido conforme solicitado
             } else if (field === 'uid') {
-                document[field] = '';
+                document[field] = ""; // Preenchido conforme solicitado
             } else if (field === 'uniq_number') {
-                document[field] = faker.number.int({ min: 100000, max: 999999 });
+                document[field] = faker.number.int({ min: 100000, max: 999999 }); // Usando Faker para um número único
             }
-        } else {
-            // Para outras coleções
-            if (field.includes('name')) {
-                document[field] = faker.person.fullName();
-            } else if (field.includes('email')) {
-                document[field] = faker.internet.email();
-            } else if (field.includes('phone')) {
-                document[field] = faker.phone.number();
-            } else if (field.includes('address')) {
-                document[field] = faker.address.streetAddress();
-            } else if (field.includes('created')) {
-                document[field] = faker.date.past();
-            } else if (field.includes('number')) {
-                document[field] = faker.number.int({ min: 100000, max: 999999 });
-            } else {
-                document[field] = faker.lorem.word();
+        } else if (collectionName === 'Arenas') {
+            if (field === 'adress') {
+                document[field] = faker.location.streetAddress();
+            } else if (field === 'logo') {
+                document[field] = 'https://engenhariadocorpo.com.br/wp-content/uploads/2022/10/Imagens-Blog-2-1.png';
+            } else if (field === 'name') {
+                document[field] = faker.company.name();
+            } else if (field === 'videos') {
+                document[field] = [""];
+            } else if (field === 'id') {
+                document[field] = '';
+            } else if (field === 'esporte') {
+                document[field] = 'BeachTennis';
+            } else if (field === 'replay_sis') {
+                document[field] = true;
+            } else if (field === 'competitivo_sis') {
+                document[field] = true;
+            } else if (field === 'admin_user_id') {
+                document[field] = '';
+            } else if (field === 'admin_comp_list') {
+                document[field] = [""];
+            } else if (field === 'ativo') {
+                document[field] = true;
+            } else if (field === 'outrosesportes') {
+                document[field] = [""]
             }
         }
+
     });
 
     return document;
