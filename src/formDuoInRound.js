@@ -16,8 +16,8 @@ async function getRound(tournamentId, roundNumber) {
 
     const snapshot = await firestore
         .collection('Rodadas')
-        .where('tournament_id', '==', tournamentRef)  // Usando a referência
-        .where('round_number', '==', roundNumber)      // Aqui, round_number deve ser um número
+        .where('tournament_id', '==', tournamentRef)
+        .where('round_number', '==', roundNumber)
         .get();
 
     if (snapshot.empty) {
@@ -25,23 +25,21 @@ async function getRound(tournamentId, roundNumber) {
         return null;
     }
 
-    return snapshot.docs[0];  // Retorna o primeiro documento encontrado
+    return snapshot.docs[0];
 }
 
 async function getUsersWithoutDuo(round) {
     const playersInRound = round.data().players || [];
 
-    // Busca todos os usuários registrados
     const usersSnapshot = await firestore.collection('users').get();
     const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    // Filtra os usuários que não estão na rodada e não têm duplas
     const usersWithoutDuo = users.filter(user => {
-        // Verifica se o usuário não é nem user1 nem user2 de nenhuma dupla
+
         const isUserInRound = playersInRound.some(player =>
             player.user1_id === user.id || player.user2_id === user.id
         );
-        return !isUserInRound; // Retorna apenas usuários que não estão na rodada
+        return !isUserInRound;
     });
 
     return usersWithoutDuo;
@@ -50,12 +48,10 @@ async function getUsersWithoutDuo(round) {
 async function createDuoInRound(round, user1, user2) {
     const players = round.data().players || [];
 
-    // Filtra os jogadores para remover os que estão sendo unidos em dupla
     const updatedPlayers = players.filter(player =>
         player.userId !== user1.id && player.userId !== user2.id
     );
 
-    // Cria o novo objeto de dupla
     const duo = {
         user1_display_name: user1.display_name,
         user1_genero: user1.genero,
@@ -65,10 +61,8 @@ async function createDuoInRound(round, user1, user2) {
         user2_id: user2.id,
     };
 
-    // Adiciona a nova dupla à lista de jogadores
     updatedPlayers.push(duo);
 
-    // Atualiza a rodada com a nova lista de jogadores
     await firestore.collection('Rodadas').doc(round.id).update({ players: updatedPlayers });
     console.log(`Dupla adicionada à rodada: ${user1.display_name} e ${user2.display_name}`);
 }
@@ -100,7 +94,6 @@ async function main() {
         return;
     }
 
-    // Exibe os usuários que não têm dupla
     const { selectedUser1 } = await inquirer.prompt([
         {
             type: 'list',

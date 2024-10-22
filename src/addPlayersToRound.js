@@ -10,15 +10,15 @@ admin.initializeApp({
 const firestore = admin.firestore();
 
 async function getRound(tournamentId, roundNumber) {
-    // Converte o ID do torneio em uma referência
+
     const tournamentRef = firestore.doc(tournamentId);
 
     console.log(`Procurando rodada com ID do torneio: ${tournamentId} e número da rodada: ${roundNumber}`);
 
     const snapshot = await firestore
         .collection('Rodadas')
-        .where('tournament_id', '==', tournamentRef)  // Usando a referência
-        .where('round_number', '==', roundNumber)      // Aqui, round_number deve ser um número
+        .where('tournament_id', '==', tournamentRef)
+        .where('round_number', '==', roundNumber)
         .get();
 
     if (snapshot.empty) {
@@ -26,18 +26,16 @@ async function getRound(tournamentId, roundNumber) {
         return null;
     }
 
-    return snapshot.docs[0];  // Retorna o primeiro documento encontrado
+    return snapshot.docs[0];
 }
 
 async function getUsersNotInRound(round) {
     const playersInRound = round.data().players || [];
-    const playerIdsInRound = playersInRound.map(player => player.userId); // Coleta os userId dos jogadores na rodada
+    const playerIdsInRound = playersInRound.map(player => player.userId);
 
-    // Busca todos os usuários registrados
     const usersSnapshot = await firestore.collection('users').get();
     const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    // Filtra os usuários que não estão na rodada
     const usersNotInRound = users.filter(user => !playerIdsInRound.includes(user.id));
 
     return usersNotInRound;
@@ -45,7 +43,7 @@ async function getUsersNotInRound(round) {
 
 async function addPlayerToRound(round, playerId, playerGenero, playerName) {
     const players = round.data().players || [];
-    players.push({ userId: playerId, genero: playerGenero, display_name: playerName }); // Adiciona o jogador à rodada
+    players.push({ userId: playerId, genero: playerGenero, display_name: playerName });
 
     await firestore.collection('Rodadas').doc(round.id).update({ players });
     console.log(`Jogador com ID ${playerId} adicionado à rodada.`);
@@ -78,15 +76,14 @@ async function main() {
         return;
     }
 
-    // Exibe os usuários que não estão na rodada
     const { selectedUser } = await inquirer.prompt([
         {
             type: 'list',
             name: 'selectedUser',
             message: 'Escolha um usuário para adicionar à rodada:',
             choices: usersNotInRound.map(user => ({
-                name: `${user.display_name} (${user.genero})`, // Exibe display_name e genero
-                value: user, // Armazena o objeto do usuário inteiro
+                name: `${user.display_name} (${user.genero})`,
+                value: user,
             })),
         },
     ]);
@@ -94,7 +91,7 @@ async function main() {
     const playerToAdd = {
         display_name: selectedUser.display_name,
         genero: selectedUser.genero,
-        userId: selectedUser.id, // Passa o ID do usuário
+        userId: selectedUser.id,
     };
 
     await addPlayerToRound(round, playerToAdd.userId, playerToAdd.genero, playerToAdd.display_name);

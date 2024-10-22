@@ -51,17 +51,17 @@ async function createRandomDocument(schema, collectionName) {
             } else if (field === 'created_time') {
                 document[field] = faker.date.past()
             } else if (field === 'display_name') {
-                document[field] = faker.person.firstName(); // Preenchido conforme solicitado
+                document[field] = faker.person.firstName();
             } else if (field === 'email') {
-                document[field] = faker.internet.email(); // Preenchido conforme solicitado
+                document[field] = faker.internet.email();
             } else if (field === 'genero') {
-                document[field] = "Masculino"; // Preenchido conforme solicitado
+                document[field] = "Masculino";
             } else if (field === 'phone') {
-                document[field] = faker.phone.number('(##) #####-####'); // Preenchido conforme solicitado
+                document[field] = faker.phone.number('(##) #####-####');
             } else if (field === 'uid') {
-                document[field] = ""; // Preenchido conforme solicitado
+                document[field] = "";
             } else if (field === 'uniq_number') {
-                document[field] = faker.number.int({ min: 100000, max: 999999 }); // Usando Faker para um número único
+                document[field] = faker.number.int({ min: 100000, max: 999999 });
             }
         } else if (collectionName === 'Arenas') {
             if (field === 'adress') {
