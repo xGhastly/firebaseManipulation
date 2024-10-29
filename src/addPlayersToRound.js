@@ -1,7 +1,7 @@
 const admin = require('firebase-admin');
 const inquirer = require('inquirer').default;
 
-const serviceAccount = require('../credentials/instaplay-dev-29e75-firebase-adminsdk-p3phf-a089fec062.json');
+const serviceAccount = require('../credentials/instaplay-dev-29e75-firebase-adminsdk-p3phf-b307b68a72.json');
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
@@ -49,6 +49,21 @@ async function addPlayerToRound(round, playerId, playerGenero, playerName) {
     console.log(`Jogador com ID ${playerId} adicionado à rodada.`);
 }
 
+async function addAllPlayersToRound(round, usersNotInRound) {
+    const players = round.data().players || [];
+
+    usersNotInRound.forEach(user => {
+        players.push({
+            userId: user.id,
+            genero: user.genero,
+            display_name: user.display_name,
+        });
+        console.log(`Jogador com ID ${user.id} (${user.display_name}) adicionado à rodada.`);
+    });
+
+    await firestore.collection('Rodadas').doc(round.id).update({ players });
+}
+
 async function main() {
     const { tournamentId, roundNumber } = await inquirer.prompt([
         {
@@ -76,25 +91,32 @@ async function main() {
         return;
     }
 
-    const { selectedUser } = await inquirer.prompt([
+    const { selectedOption } = await inquirer.prompt([
         {
             type: 'list',
-            name: 'selectedUser',
-            message: 'Escolha um usuário para adicionar à rodada:',
-            choices: usersNotInRound.map(user => ({
-                name: `${user.display_name} (${user.genero})`,
-                value: user,
-            })),
+            name: 'selectedOption',
+            message: 'Escolha uma opção:',
+            choices: [
+                ...usersNotInRound.map(user => ({
+                    name: `${user.display_name} (${user.genero})`,
+                    value: user,
+                })),
+                { name: 'Adicionar todos os usuários disponíveis', value: 'addAll' }
+            ],
         },
     ]);
 
-    const playerToAdd = {
-        display_name: selectedUser.display_name,
-        genero: selectedUser.genero,
-        userId: selectedUser.id,
-    };
+    if (selectedOption === 'addAll') {
+        await addAllPlayersToRound(round, usersNotInRound);
+    } else {
+        const playerToAdd = {
+            display_name: selectedOption.display_name,
+            genero: selectedOption.genero,
+            userId: selectedOption.id,
+        };
 
-    await addPlayerToRound(round, playerToAdd.userId, playerToAdd.genero, playerToAdd.display_name);
+        await addPlayerToRound(round, playerToAdd.userId, playerToAdd.genero, playerToAdd.display_name);
+    }
 }
 
 main().catch(console.error);

@@ -1,7 +1,7 @@
 const admin = require('firebase-admin');
 const inquirer = require('inquirer').default;
 
-const serviceAccount = require('../credentials/instaplay-dev-29e75-firebase-adminsdk-p3phf-a089fec062.json');
+const serviceAccount = require('../credentials/instaplay-dev-29e75-firebase-adminsdk-p3phf-b307b68a72.json');
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
@@ -30,12 +30,10 @@ async function getRound(tournamentId, roundNumber) {
 
 async function getUsersWithoutDuo(round) {
     const playersInRound = round.data().players || [];
-
     const usersSnapshot = await firestore.collection('users').get();
     const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     const usersWithoutDuo = users.filter(user => {
-
         const isUserInRound = playersInRound.some(player =>
             player.user1_id === user.id || player.user2_id === user.id
         );
@@ -67,6 +65,28 @@ async function createDuoInRound(round, user1, user2) {
     console.log(`Dupla adicionada à rodada: ${user1.display_name} e ${user2.display_name}`);
 }
 
+async function createAllDuos(round, usersWithoutDuo) {
+    let duos = [];
+
+    for (let i = 0; i < usersWithoutDuo.length; i += 2) {
+        if (i + 1 < usersWithoutDuo.length) {
+            const duo = {
+                user1_display_name: usersWithoutDuo[i].display_name,
+                user1_genero: usersWithoutDuo[i].genero,
+                user1_id: usersWithoutDuo[i].id,
+                user2_display_name: usersWithoutDuo[i + 1].display_name,
+                user2_genero: usersWithoutDuo[i + 1].genero,
+                user2_id: usersWithoutDuo[i + 1].id,
+            };
+            duos.push(duo); // Adiciona a dupla ao array
+            console.log(`Dupla criada: ${duo.user1_display_name} e ${duo.user2_display_name}`);
+        }
+    }
+
+    await firestore.collection('Rodadas').doc(round.id).update({ players: duos });
+    console.log("Todas as duplas foram criadas e adicionadas à rodada.");
+}
+
 async function main() {
     const { tournamentId, roundNumber } = await inquirer.prompt([
         {
@@ -90,37 +110,53 @@ async function main() {
 
     const usersWithoutDuo = await getUsersWithoutDuo(round);
     if (usersWithoutDuo.length < 2) {
-        console.log('Não há usuários disponíveis para formar uma dupla.');
+        console.log('Não há usuários suficientes para formar uma dupla.');
         return;
     }
 
-    const { selectedUser1 } = await inquirer.prompt([
+    const { selectedOption } = await inquirer.prompt([
         {
             type: 'list',
-            name: 'selectedUser1',
-            message: 'Escolha o primeiro usuário:',
-            choices: usersWithoutDuo.map(user => ({
-                name: `${user.display_name} (${user.genero})`,
-                value: user,
-            })),
+            name: 'selectedOption',
+            message: 'Escolha uma opção:',
+            choices: [
+                { name: 'Criar uma dupla manualmente', value: 'manual' },
+                { name: 'Criar todas as duplas automaticamente', value: 'auto' },
+            ],
         },
     ]);
 
-    const usersRemaining = usersWithoutDuo.filter(user => user.id !== selectedUser1.id);
+    if (selectedOption === 'auto') {
+        await createAllDuos(round, usersWithoutDuo);
+    } else {
+        const { selectedUser1 } = await inquirer.prompt([
+            {
+                type: 'list',
+                name: 'selectedUser1',
+                message: 'Escolha o primeiro usuário:',
+                choices: usersWithoutDuo.map(user => ({
+                    name: `${user.display_name} (${user.genero})`,
+                    value: user,
+                })),
+            },
+        ]);
 
-    const { selectedUser2 } = await inquirer.prompt([
-        {
-            type: 'list',
-            name: 'selectedUser2',
-            message: 'Escolha o segundo usuário:',
-            choices: usersRemaining.map(user => ({
-                name: `${user.display_name} (${user.genero})`,
-                value: user,
-            })),
-        },
-    ]);
+        const usersRemaining = usersWithoutDuo.filter(user => user.id !== selectedUser1.id);
 
-    await createDuoInRound(round, selectedUser1, selectedUser2);
+        const { selectedUser2 } = await inquirer.prompt([
+            {
+                type: 'list',
+                name: 'selectedUser2',
+                message: 'Escolha o segundo usuário:',
+                choices: usersRemaining.map(user => ({
+                    name: `${user.display_name} (${user.genero})`,
+                    value: user,
+                })),
+            },
+        ]);
+
+        await createDuoInRound(round, selectedUser1, selectedUser2);
+    }
 }
 
 main().catch(console.error);

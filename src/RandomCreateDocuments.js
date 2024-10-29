@@ -2,7 +2,7 @@ const admin = require('firebase-admin');
 const inquirer = require('inquirer').default;
 const { faker } = require('@faker-js/faker');
 
-const serviceAccount = require('../credentials/instaplay-dev-29e75-firebase-adminsdk-p3phf-a089fec062.json');
+const serviceAccount = require('../credentials/instaplay-dev-29e75-firebase-adminsdk-p3phf-b307b68a72.json');
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
